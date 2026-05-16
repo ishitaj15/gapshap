@@ -2,6 +2,7 @@ const express = require('express');
 const http    = require('http');
 const cors    = require('cors');
 require('dotenv').config();
+require('./services/db');
 
 const app    = express();
 const server = http.createServer(app);
