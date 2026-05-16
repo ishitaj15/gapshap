@@ -1,0 +1,20 @@
+# Node
+node_modules/
+.env
+
+# C++ build artifacts
+cpp-server/build/
+*.o
+*.a
+
+# Docker
+.dockerenv
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# Personal notes
+INTERVIEW_NOTES.md
