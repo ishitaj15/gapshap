@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
 
-console.log('[db] password being used:', process.env.DB_PASSWORD);
+
 
 
 // Connection pool — reuses connections instead of creating new ones
