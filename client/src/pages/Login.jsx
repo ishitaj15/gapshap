@@ -8,6 +8,7 @@ export default function Login({ onLogin, onGoSignup }) {
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState('')
   const [loading,  setLoading]  = useState(false)
+  const [showPass, setShowPass] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -57,17 +58,31 @@ export default function Login({ onLogin, onGoSignup }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              placeholder="••••••••"
-              required
-            />
+            <div className="flex justify-between items-center mb-1">
+  <label className="block text-sm font-medium text-gray-700">
+    Password
+  </label>
+  <span className="text-xs text-purple-600 hover:underline cursor-pointer">
+    Forgot password?
+  </span>
+</div>
+            <div className="relative">
+  <input
+    type={showPass ? 'text' : 'password'}
+    value={password}
+    onChange={e => setPassword(e.target.value)}
+    className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-purple-400"
+    placeholder="••••••••"
+    required
+  />
+  <button
+    type="button"
+    onClick={() => setShowPass(p => !p)}
+    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+  >
+    {showPass ? '🙈' : '👁️'}
+  </button>
+</div>
           </div>
 
           <button

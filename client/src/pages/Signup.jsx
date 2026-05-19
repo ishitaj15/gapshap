@@ -3,29 +3,41 @@ import axios from 'axios'
 
 const API = 'http://localhost:3001/api'
 
+const requirements = [
+  { label: 'At least 8 characters',     test: p => p.length >= 8 },
+  { label: 'One uppercase letter (A-Z)', test: p => /[A-Z]/.test(p) },
+  { label: 'One lowercase letter (a-z)', test: p => /[a-z]/.test(p) },
+  { label: 'One number (0-9)',           test: p => /[0-9]/.test(p) },
+  { label: 'One special character (!@#$)', test: p => /[!@#$%^&*]/.test(p) },
+]
+
 export default function Signup({ onSignup }) {
-  const [username, setUsername] = useState('')
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [error,    setError]    = useState('')
-  const [loading,  setLoading]  = useState(false)
+  const [username,    setUsername]    = useState('')
+  const [email,       setEmail]       = useState('')
+  const [password,    setPassword]    = useState('')
+  const [showPass,    setShowPass]    = useState(false)
+  const [error,       setError]       = useState('')
+  const [loading,     setLoading]     = useState(false)
+
+  const allValid = requirements.every(r => r.test(password))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (!allValid) {
+      setError('Password does not meet all requirements')
+      return
+    }
+
     setLoading(true)
-
     try {
-      // First signup
       await axios.post(`${API}/auth/signup`, { username, email, password })
-
-      // Then login automatically
       const res = await axios.post(`${API}/auth/login`, { email, password })
       localStorage.setItem('accessToken',  res.data.accessToken)
       localStorage.setItem('refreshToken', res.data.refreshToken)
       localStorage.setItem('user',         JSON.stringify(res.data.user))
       onSignup(res.data.user)
-
     } catch (err) {
       setError(err.response?.data?.error || 'Signup failed')
     } finally {
@@ -79,19 +91,41 @@ export default function Signup({ onSignup }) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              placeholder="••••••••"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(p => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPass ? '🙈' : '👁️'}
+              </button>
+            </div>
+
+            {/* Password requirements */}
+            {password.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {requirements.map((r, i) => (
+                  <li key={i} className={`text-xs flex items-center gap-1
+                    ${r.test(password) ? 'text-green-600' : 'text-red-400'}`}
+                  >
+                    {r.test(password) ? '✅' : '❌'} {r.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !allValid}
             className="w-full bg-purple-600 text-white py-2 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50"
           >
             {loading ? 'Creating account...' : 'Sign Up'}
