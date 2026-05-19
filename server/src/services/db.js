@@ -1,8 +1,5 @@
 const { Pool } = require('pg');
 
-
-
-
 // Connection pool — reuses connections instead of creating new ones
 const pool = new Pool({
   host:     process.env.DB_HOST,

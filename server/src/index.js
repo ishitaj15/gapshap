@@ -11,6 +11,10 @@ const server = http.createServer(app);
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 
+// ─── Routes ───────────────────────────────────────────────
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
 // ─── Health check ─────────────────────────────────────────
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
