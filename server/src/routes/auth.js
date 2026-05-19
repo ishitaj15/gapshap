@@ -1,7 +1,12 @@
 const express = require('express');
 const bcrypt  = require('bcrypt');
 const db      = require('../services/db');
-const jwt     = require('jsonwebtoken');
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+  revokeRefreshToken,
+} = require('../services/tokenService');
 
 const router = express.Router();
 
@@ -65,24 +70,63 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-    { userId: user.id },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
-    );
+    // Generate both tokens
+  const accessToken  = generateAccessToken(user.id);
+  const refreshToken = await generateRefreshToken(user.id);
 
-    res.json({
-    token,
+  res.json({
+    accessToken,
+    refreshToken,
     user: {
-        id:       user.id,
-        username: user.username,
-        email:    user.email,
+      id:       user.id,
+      username: user.username,
+      email:    user.email,
     }
-    });
+  });
 
   } catch (err) {
     console.error('[auth] login error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─── REFRESH TOKEN ────────────────────────────────────────
+router.post('/refresh', async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({ error: 'Refresh token required' });
+  }
+
+  try {
+    const userId = await verifyRefreshToken(refreshToken);
+
+    if (!userId) {
+      return res.status(403).json({ error: 'Invalid or expired refresh token' });
+    }
+
+    const accessToken = generateAccessToken(userId);
+    res.json({ accessToken });
+
+  } catch (err) {
+    console.error('[auth] refresh error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─── LOGOUT ───────────────────────────────────────────────
+router.post('/logout', async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({ error: 'Refresh token required' });
+  }
+
+  try {
+    await revokeRefreshToken(refreshToken);
+    res.json({ message: 'Logged out successfully' });
+  } catch (err) {
+    console.error('[auth] logout error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
