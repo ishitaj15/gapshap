@@ -15,6 +15,12 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+// ─── Protected test route ──────────────────────────────────
+const { requireAuth } = require('./middleware/jwt');
+app.get('/api/me', requireAuth, (req, res) => {
+  res.json({ userId: req.userId });
+});
+
 // ─── Health check ─────────────────────────────────────────
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
