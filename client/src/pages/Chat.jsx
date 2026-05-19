@@ -47,7 +47,7 @@ export default function Chat({ user, onLogout }) {
       )
       setConversationId(res.data.conversation.id)
       setMessages([])
-    } catch (err) {
+    } catch {
       alert('User not found or invalid ID')
     }
   }
