@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import Login from './pages/Login'
-import Chat  from './pages/Chat'
+import Login  from './pages/Login'
+import Signup from './pages/Signup'
+import Chat   from './pages/Chat'
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -8,11 +9,17 @@ function App() {
     return saved ? JSON.parse(saved) : null
   })
 
-  if (!user) {
-    return <Login onLogin={setUser} />
+  const [page, setPage] = useState('login')
+
+  if (user) {
+    return <Chat user={user} onLogout={() => setUser(null)} />
   }
 
-  return <Chat user={user} onLogout={() => setUser(null)} />
+  if (page === 'signup') {
+    return <Signup onSignup={setUser} />
+  }
+
+  return <Login onLogin={setUser} onGoSignup={() => setPage('signup')} />
 }
 
 export default App
