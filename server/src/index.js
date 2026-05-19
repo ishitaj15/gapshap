@@ -4,6 +4,9 @@ const { Server } = require('socket.io');
 const cors    = require('cors');
 require('dotenv').config();
 require('./services/db');
+// Connect to C++ server
+const bridge = require('./services/cppBridge');
+bridge.connect();
 
 const app    = express();
 const server = http.createServer(app);
