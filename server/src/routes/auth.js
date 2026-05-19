@@ -36,4 +36,46 @@ router.post('/signup', async (req, res) => {
   }
 });
 
+// ─── LOGIN ────────────────────────────────────────────────
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  try {
+    // Find user by email
+    const result = await db.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
+    const user = result.rows[0];
+
+    // Don't reveal whether email exists or not
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Compare password against stored hash
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    res.json({
+      user: {
+        id:       user.id,
+        username: user.username,
+        email:    user.email,
+      }
+    });
+
+  } catch (err) {
+    console.error('[auth] login error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
