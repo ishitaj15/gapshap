@@ -14,6 +14,8 @@ app.use(express.json());
 // ─── Routes ───────────────────────────────────────────────
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
+const messageRoutes = require('./routes/messages');
+app.use('/api/messages', messageRoutes);
 
 // ─── Protected test route ──────────────────────────────────
 const { requireAuth } = require('./middleware/jwt');
