@@ -1,6 +1,8 @@
 const express = require('express');
 const bcrypt  = require('bcrypt');
 const db      = require('../services/db');
+const { loginRateLimit } = require('../middleware/rateLimit');
+
 const {
   generateAccessToken,
   generateRefreshToken,
@@ -43,7 +45,7 @@ router.post('/signup', async (req, res) => {
 });
 
 // ─── LOGIN ────────────────────────────────────────────────
-router.post('/login', async (req, res) => {
+router.post('/login', loginRateLimit, async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
