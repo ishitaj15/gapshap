@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../lib/axios'
 
-const API = 'http://localhost:3001/api'
 
 const requirements = [
   { label: 'At least 8 characters',     test: p => p.length >= 8 },
@@ -32,8 +31,8 @@ export default function Signup({ onSignup }) {
 
     setLoading(true)
     try {
-      await axios.post(`${API}/auth/signup`, { username, email, password })
-      const res = await axios.post(`${API}/auth/login`, { email, password })
+      await api.post('/auth/signup', { username, email, password })
+      const res = await api.post('/auth/login', { email, password })
       localStorage.setItem('accessToken',  res.data.accessToken)
       localStorage.setItem('refreshToken', res.data.refreshToken)
       localStorage.setItem('user',         JSON.stringify(res.data.user))

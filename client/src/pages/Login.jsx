@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../lib/axios'
 
-const API = 'http://localhost:3001/api'
+
 
 export default function Login({ onLogin, onGoSignup }) {
   const [email,    setEmail]    = useState('')
@@ -16,7 +16,7 @@ export default function Login({ onLogin, onGoSignup }) {
     setLoading(true)
 
     try {
-      const res = await axios.post(`${API}/auth/login`, { email, password })
+      const res = await api.post('/auth/login', { email, password })
       // Save tokens to localStorage
       localStorage.setItem('accessToken',  res.data.accessToken)
       localStorage.setItem('refreshToken', res.data.refreshToken)

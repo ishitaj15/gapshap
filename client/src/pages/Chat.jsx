@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { io } from 'socket.io-client'
-import axios from 'axios'
+import api from '../lib/axios'
 
-const API    = 'http://localhost:3001/api'
+
 const SOCKET = 'http://localhost:3001'
 
 export default function Chat({ user, onLogout }) {
@@ -39,12 +39,7 @@ export default function Chat({ user, onLogout }) {
   const startConversation = async () => {
     if (!recipientId.trim()) return
     try {
-      const token = localStorage.getItem('accessToken')
-      const res   = await axios.post(
-        `${API}/messages/conversation`,
-        { otherUserId: recipientId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+     const res = await api.post('/messages/conversation', { otherUserId: recipientId })
       setConversationId(res.data.conversation.id)
       setMessages([])
     } catch {
