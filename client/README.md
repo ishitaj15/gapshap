@@ -1,16 +1,81 @@
-# React + Vite
+# GapShap 💬
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A production-grade real-time chat application with a custom C++ backend engine.
 
-Currently, two official plugins are available:
+## Architecture
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Browser (React) ──── Socket.io ────► Node.js ──── TCP ────► C++ epoll Server
+│                        │
+└──── PostgreSQL ◄───────┘
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Layer | Technology |
+|---|---|
+| Frontend | React + Vite + Tailwind CSS |
+| Backend API | Node.js + Express + Socket.io |
+| Real-time Engine | C++17 + Linux epoll (edge-triggered) |
+| Database | PostgreSQL 16 |
+| Infrastructure | Docker + Docker Compose |
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Real-time messaging via Socket.io + C++ TCP server
+- JWT authentication with refresh tokens
+- bcrypt password hashing
+- Rate limiting on login (10 attempts / 15 min)
+- Auto token refresh via axios interceptor
+- Password strength validation
+- Persistent message history
+
+## Project Structure
+gapshap/
+├── client/          # React frontend
+├── server/          # Node.js backend
+├── cpp-server/      # C++ epoll TCP server
+├── db/              # PostgreSQL schema
+└── docker-compose.yml
+
+## Getting Started
+
+### Prerequisites
+- Docker Desktop
+- Node.js 20+
+
+### Run locally
+
+```bash
+# Start database + C++ server
+docker compose up -d
+
+# Start Node.js backend
+cd server && npm install && npm run dev
+
+# Start React frontend
+cd client && npm install && npm run dev
+```
+
+Open http://localhost:5173
+
+## Binary Protocol (Node.js ↔ C++)
+┌──────────┬──────┬───────────────────┐
+│  Length  │ Type │     Payload       │
+│ (4 bytes)│ (1B) │   (JSON string)   │
+└──────────┴──────┴───────────────────┘
+
+| Type | Value | Description |
+|---|---|---|
+| AUTH | 0x01 | User connected |
+| SEND_MESSAGE | 0x02 | New message |
+| DELIVER_MESSAGE | 0x03 | Deliver to recipient |
+| USER_DISCONNECTED | 0x04 | User left |
+| ACK | 0x05 | Acknowledgement |
+| ERROR | 0xFF | Error |
+
+## Database Schema
+
+- `users` — accounts with bcrypt hashed passwords
+- `conversations` — unique pairs of users
+- `messages` — chat messages with conversation reference
+- `refresh_tokens` — hashed refresh tokens with expiry
+
