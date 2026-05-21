@@ -3,10 +3,14 @@
 A production-grade real-time chat application with a custom C++ backend engine.
 
 ## Architecture
+Browser ── Socket.io ──► Node.js ── TCP ──► C++ epoll Server
+                              │                    │
+                              └── PostgreSQL ◄─────┘
 
-Browser (React) ──── Socket.io ────► Node.js ──── TCP ────► C++ epoll Server
-│                        │
-└──── PostgreSQL ◄───────┘
+Both Node.js AND C++ connect to PostgreSQL:
+
+Node.js → reads message history, handles auth
+C++ → saves new messages
 
 ## Tech Stack
 
