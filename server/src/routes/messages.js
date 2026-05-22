@@ -60,4 +60,41 @@ router.post('/conversation', requireAuth, async (req, res) => {
   }
 });
 
+// ─── SEARCH USERS BY USERNAME ─────────────────────────────
+router.get('/users/search', requireAuth, async (req, res) => {
+  const { q } = req.query;
+
+  if (!q || q.trim().length < 2) {
+    return res.status(400).json({ error: 'Search query too short' });
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT id, username, email
+       FROM users
+       WHERE username ILIKE $1
+       AND id != $2
+       LIMIT 10`,
+      [`%${q}%`, req.userId]
+    );
+
+    res.json({ users: result.rows });
+
+  } catch (err) {
+    console.error('[users] search error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
+
+
+//ILIKE is PostgreSQL's case-insensitive LIKE. Searching "ish" finds "Ishita", "ishita", "ISHITA". The % wildcards mean "anything before or after".
+
+// WHERE username ILIKE $1
+// Where $1 gets replaced with %${q}% — so if you type "ish" it becomes %ish% which matches any username containing "ish" — like "ishita", "fishing", "rishab".
+// The % means "anything can be here". So:
+
+// %ish% → anything containing "ish"
+// ish% → anything starting with "ish"
+// %ish → anything ending with "ish"

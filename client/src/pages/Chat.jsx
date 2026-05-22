@@ -9,6 +9,8 @@ export default function Chat({ user, onLogout }) {
   const [messages,       setMessages]       = useState([])
   const [input,          setInput]          = useState('')
   const [recipientId,    setRecipientId]    = useState('')
+  const [searchQuery,    setSearchQuery]    = useState('')
+  const [searchResults,  setSearchResults]  = useState([])
   const [conversationId, setConversationId] = useState(null)
   const socketRef = useRef(null)
   const bottomRef = useRef(null)
@@ -36,16 +38,32 @@ export default function Chat({ user, onLogout }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const startConversation = async () => {
-    if (!recipientId.trim()) return
-    try {
-     const res = await api.post('/messages/conversation', { otherUserId: recipientId })
-      setConversationId(res.data.conversation.id)
-      setMessages([])
-    } catch {
-      alert('User not found or invalid ID')
-    }
+  const searchUsers = async (q) => {
+  setSearchQuery(q)
+  if (q.trim().length < 2) {
+    setSearchResults([])
+    return
   }
+  try {
+    const res = await api.get(`/messages/users/search?q=${q}`)
+    setSearchResults(res.data.users)
+  } catch {
+    setSearchResults([])
+  }
+}
+
+const startConversation = async (userId, username) => {
+  setRecipientId(userId)
+  setSearchQuery(username)
+  setSearchResults([])
+  try {
+    const res = await api.post('/messages/conversation', { otherUserId: userId })
+    setConversationId(res.data.conversation.id)
+    setMessages([])
+  } catch {
+    alert('Could not start conversation')
+  }
+}
 
   const sendMessage = () => {
     if (!input.trim() || !conversationId || !recipientId) return
@@ -80,21 +98,35 @@ export default function Chat({ user, onLogout }) {
         </div>
       </div>
 
-      {/* Start conversation */}
-      <div className="bg-white border-b px-6 py-3 flex gap-2">
-        <input
-          value={recipientId}
-          onChange={e => setRecipientId(e.target.value)}
-          placeholder="Paste recipient's user ID..."
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-        />
-        <button
-          onClick={startConversation}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700"
+      {/* User search */}
+<div className="bg-white border-b px-6 py-3 relative">
+  <input
+    value={searchQuery}
+    onChange={e => searchUsers(e.target.value)}
+    placeholder="Search users by username..."
+    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+  />
+  {/* Search results dropdown */}
+  {searchResults.length > 0 && (
+    <div className="absolute top-full left-6 right-6 bg-white border border-gray-200 rounded-lg shadow-lg z-10 mt-1">
+      {searchResults.map(u => (
+        <div
+          key={u.id}
+          onClick={() => startConversation(u.id, u.username)}
+          className="px-4 py-3 hover:bg-purple-50 cursor-pointer flex items-center gap-3"
         >
-          Start Chat
-        </button>
-      </div>
+          <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold text-sm">
+            {u.username[0].toUpperCase()}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-800">{u.username}</p>
+            <p className="text-xs text-gray-400">{u.email}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
