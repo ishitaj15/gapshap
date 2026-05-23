@@ -1,8 +1,35 @@
 const express      = require('express');
 const db           = require('../services/db');
 const { requireAuth } = require('../middleware/jwt');
-
 const router = express.Router();
+
+
+// ─── SEARCH USERS BY USERNAME ─────────────────────────────
+router.get('/search/users', requireAuth, async (req, res) => {
+  const { q } = req.query;
+
+  if (!q || q.trim().length < 2) {
+    return res.status(400).json({ error: 'Query must be at least 2 characters' });
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT id, username
+       FROM users
+       WHERE username ILIKE $1
+       AND id != $2
+       LIMIT 10`,
+      [`%${q.trim()}%`, req.userId]
+    );
+
+    res.json({ users: result.rows });
+  } catch (err) {
+    console.error('[search] error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 
 // ─── GET MESSAGE HISTORY ──────────────────────────────────
 // Returns last 50 messages between two users
