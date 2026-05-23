@@ -2,70 +2,89 @@ import { useState, useEffect, useRef } from 'react'
 import { io } from 'socket.io-client'
 import api from '../lib/axios'
 
-
 const SOCKET = 'http://localhost:3001'
 
 export default function Chat({ user, onLogout }) {
+  const [conversations,  setConversations]  = useState([])
+  const [activeConv,     setActiveConv]     = useState(null) // { conversation_id, other_user_id, other_username }
   const [messages,       setMessages]       = useState([])
   const [input,          setInput]          = useState('')
-  const [recipientId,    setRecipientId]    = useState('')
-  const [conversationId, setConversationId] = useState(null)
   const socketRef = useRef(null)
   const bottomRef = useRef(null)
 
+  // ─── Connect socket once ──────────────────────────────
   useEffect(() => {
     const token = localStorage.getItem('accessToken')
-
-    // Connect socket with JWT
     socketRef.current = io(SOCKET, { auth: { token } })
 
     socketRef.current.on('connect', () => {
       console.log('[socket] connected')
     })
 
-    // Listen for incoming messages
     socketRef.current.on('new_message', (msg) => {
-      setMessages(prev => [...prev, msg])
+      // Add to messages if it belongs to active conversation
+      setMessages(prev => {
+        if (activeConvRef.current?.conversation_id === msg.conversationId) {
+          return [...prev, msg]
+        }
+        return prev
+      })
+      // Update last message preview in sidebar
+      setConversations(prev => prev.map(c =>
+        c.conversation_id === msg.conversationId
+          ? { ...c, last_message: msg.content, last_message_at: msg.created_at }
+          : c
+      ))
     })
 
     return () => socketRef.current.disconnect()
   }, [])
 
-  // Auto scroll to bottom on new message
+  // ─── Keep a ref to activeConv for use inside socket callback ──
+  const activeConvRef = useRef(null)
+  useEffect(() => {
+    activeConvRef.current = activeConv
+  }, [activeConv])
+
+  // ─── Load conversations on mount ─────────────────────
+  useEffect(() => {
+    loadConversations()
+  }, [])
+
+  const loadConversations = async () => {
+    try {
+      const res = await api.get('/messages/')
+      setConversations(res.data.conversations)
+    } catch {
+      console.error('failed to load conversations')
+    }
+  }
+
+  // ─── Open a conversation ──────────────────────────────
+  const openConversation = async (conv) => {
+    setActiveConv(conv)
+    try {
+      const res = await api.get(`/messages/${conv.conversation_id}`)
+      setMessages(res.data.messages)
+    } catch {
+      console.error('failed to load messages')
+    }
+  }
+
+  // ─── Auto scroll ──────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const startConversation = async () => {
-    if (!recipientId.trim()) return
-    try {
-     const res = await api.post('/messages/conversation', {
-  otherUserId: recipientId.trim()
-})
-      setConversationId(res.data.conversation.id)
-      setMessages([])
-    } catch {
-      alert('User not found or invalid ID')
-    }
-  }
-
+  // ─── Send message ─────────────────────────────────────
   const sendMessage = () => {
-    if (!input.trim() || !conversationId || !recipientId) return
+    if (!input.trim() || !activeConv) return
 
     socketRef.current.emit('send_message', {
-      conversationId,
-      content:     input,
-      recipientId: recipientId.trim(),
+      conversationId: activeConv.conversation_id,
+      content:        input,
+      recipientId:    activeConv.other_user_id,
     })
-
-    setMessages(prev => [
-  ...prev,
-  {
-    senderId: user.id,
-    content: input,
-  }
-])
-
     setInput('')
   }
 
@@ -74,82 +93,142 @@ export default function Chat({ user, onLogout }) {
     onLogout()
   }
 
-  return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+  const formatTime = (ts) => {
+    if (!ts) return ''
+    const d = new Date(ts)
+    const now = new Date()
+    const diffMs = now - d
+    const diffMins = Math.floor(diffMs / 60000)
+    if (diffMins < 1)  return 'now'
+    if (diffMins < 60) return `${diffMins}m`
+    const diffHrs = Math.floor(diffMins / 60)
+    if (diffHrs < 24)  return `${diffHrs}h`
+    return `${Math.floor(diffHrs / 24)}d`
+  }
 
-      {/* Header */}
-      <div className="bg-white shadow px-6 py-4 flex justify-between items-center">
+  return (
+    <div className="h-screen flex flex-col bg-gray-100">
+
+      {/* ── Top bar ───────────────────────────────────── */}
+      <div className="bg-white shadow px-6 py-3 flex justify-between items-center shrink-0">
         <h1 className="text-xl font-bold text-purple-600">GapShap 💬</h1>
         <div className="flex items-center gap-4">
           <span className="text-gray-500 text-sm">Hi, {user.username}</span>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-red-500 hover:underline"
-          >
+          <button onClick={handleLogout} className="text-sm text-red-500 hover:underline">
             Logout
           </button>
         </div>
       </div>
 
-      {/* Start conversation */}
-      <div className="bg-white border-b px-6 py-3 flex gap-2">
-        <input
-          value={recipientId}
-          onChange={e => setRecipientId(e.target.value)}
-          placeholder="Paste recipient's user ID..."
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-        />
-        <button
-          onClick={startConversation}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700"
-        >
-          Start Chat
-        </button>
-      </div>
+      <div className="flex flex-1 overflow-hidden">
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
-        {messages.length === 0 && (
-          <p className="text-center text-gray-400 mt-10">
-            {conversationId ? 'No messages yet. Say hi!' : 'Enter a user ID above to start chatting'}
-          </p>
-        )}
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.senderId === user.id ? 'justify-end' : 'justify-start'}`}
-          >
-            <div className={`px-4 py-2 rounded-2xl max-w-xs text-sm
-              ${msg.senderId === user.id
-                ? 'bg-purple-600 text-white'
-                : 'bg-white text-gray-800 shadow'}`}
-            >
-              {msg.content}
-            </div>
+        {/* ── Sidebar ───────────────────────────────────── */}
+        <div className="w-80 bg-white border-r flex flex-col shrink-0">
+
+          <div className="p-4 border-b">
+            <p className="text-sm font-semibold text-gray-700">Messages</p>
           </div>
-        ))}
-        <div ref={bottomRef} />
-      </div>
 
-      {/* Input */}
-      <div className="bg-white border-t px-6 py-4 flex gap-2">
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && sendMessage()}
-          placeholder="Type a message..."
-          disabled={!conversationId}
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50"
-        />
-        <button
-          onClick={sendMessage}
-          disabled={!conversationId}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
-        >
-          Send
-        </button>
-      </div>
+          <div className="flex-1 overflow-y-auto">
+            {conversations.length === 0 && (
+              <p className="text-center text-gray-400 text-sm mt-8">No conversations yet</p>
+            )}
+            {conversations.map(conv => (
+              <div
+                key={conv.conversation_id}
+                onClick={() => openConversation(conv)}
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 border-b
+                  ${activeConv?.conversation_id === conv.conversation_id ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''}`}
+              >
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold text-sm shrink-0">
+                  {conv.other_username[0].toUpperCase()}
+                </div>
 
+                {/* Name + preview */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-semibold text-gray-800">
+                      {conv.other_username}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {formatTime(conv.last_message_at)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 truncate">
+                    {conv.last_message
+                      ? (conv.last_sender_id === user.id ? 'You: ' : '') + conv.last_message
+                      : 'No messages yet'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+
+        {/* ── Chat window ───────────────────────────────── */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+
+          {!activeConv ? (
+            <div className="flex-1 flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <p className="text-4xl mb-3">💬</p>
+                <p className="text-sm">Select a conversation to start chatting</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Chat header */}
+              <div className="bg-white border-b px-6 py-3 flex items-center gap-3 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold text-sm">
+                  {activeConv.other_username[0].toUpperCase()}
+                </div>
+                <span className="font-semibold text-gray-800">{activeConv.other_username}</span>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+                {messages.length === 0 && (
+                  <p className="text-center text-gray-400 text-sm mt-10">
+                    No messages yet. Say hi!
+                  </p>
+                )}
+                {messages.map((msg, i) => {
+                  const isMe = (msg.sender_id || msg.senderId) === user.id
+                  return (
+                    <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`px-4 py-2 rounded-2xl max-w-xs text-sm
+                        ${isMe ? 'bg-purple-600 text-white' : 'bg-white text-gray-800 shadow'}`}>
+                        {msg.content}
+                      </div>
+                    </div>
+                  )
+                })}
+                <div ref={bottomRef} />
+              </div>
+
+              {/* Input */}
+              <div className="bg-white border-t px-6 py-4 flex gap-2 shrink-0">
+                <input
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                  placeholder="Type a message..."
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                />
+                <button
+                  onClick={sendMessage}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+                >
+                  Send
+                </button>
+              </div>
+            </>
+          )}
+
+        </div>
+      </div>
     </div>
   )
 }
