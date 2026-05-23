@@ -2,13 +2,12 @@ import { useState } from 'react'
 import api from '../lib/axios'
 
 export default function Login({ onLogin, onGoSignup }) {
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [error,    setError]    = useState('')
-  const [loading,  setLoading]  = useState(false)
-  const [showPass, setShowPass] = useState(false)
+  const [email,     setEmail]     = useState('')
+  const [password,  setPassword]  = useState('')
+  const [error,     setError]     = useState('')
+  const [loading,   setLoading]   = useState(false)
+  const [showPass,  setShowPass]  = useState(false)
   const [forgotMsg, setForgotMsg] = useState(false)
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -32,20 +31,20 @@ export default function Login({ onLogin, onGoSignup }) {
 
       {/* ── Left panel ───────────────────────────────── */}
       <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#1a1f5e] to-[#2d3494] flex-col items-center justify-center p-12 text-white">
-        <img
-          src="/assets/logo.png"
-          alt="GapShap"
-          className="w-56 mb-6 drop-shadow-2xl brightness-110"
-        />
-        <h1 className="text-4xl font-bold mb-3 text-center">GapShap</h1>
+        <div className="bg-white rounded-full p-5 mb-6 shadow-2xl">
+          <img
+            src="/assets/logo.png"
+            alt="GapShap"
+            className="w-32 h-32 object-contain rounded-full"
+          />
+        </div>
+        <h1 className="text-4xl font-bold mb-3 text-center text-white">GapShap</h1>
         <p className="text-lg text-blue-200 mb-2 text-center italic">
           Baaten Jo Jodein
         </p>
         <p className="text-blue-300 text-sm text-center mt-4 max-w-xs leading-relaxed">
           Real-time chat powered by a custom C++ engine. Fast, secure, and built for scale.
         </p>
-
-        {/* Feature pills */}
         <div className="mt-10 space-y-3 w-full max-w-xs">
           {[
             { icon: '⚡', text: 'Real-time messaging via C++ epoll' },
@@ -95,28 +94,11 @@ export default function Login({ onLogin, onGoSignup }) {
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-medium text-gray-700">Password</label>
                 <span
-  onClick={() => setForgotMsg(true)}
-  className="text-xs text-[#2d3494] hover:underline cursor-pointer"
->
-  Forgot password?
-</span>
-{forgotMsg && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white rounded-xl p-8 max-w-sm w-full mx-4 text-center shadow-xl">
-      <div className="text-4xl mb-4">🔐</div>
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">Coming Soon</h3>
-      <p className="text-gray-500 text-sm mb-6">
-        Password reset is not available yet. Please contact support for help.
-      </p>
-      <button
-        onClick={() => setForgotMsg(false)}
-        className="bg-[#1a1f5e] text-white px-6 py-2 rounded-lg text-sm hover:bg-[#2d3494]"
-      >
-        Got it
-      </button>
-    </div>
-  </div>
-)}
+                  onClick={() => setForgotMsg(true)}
+                  className="text-xs text-[#2d3494] hover:underline cursor-pointer"
+                >
+                  Forgot password?
+                </span>
               </div>
               <div className="relative">
                 <input
@@ -158,6 +140,25 @@ export default function Login({ onLogin, onGoSignup }) {
 
         </div>
       </div>
+
+      {/* Forgot password popup */}
+      {forgotMsg && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-sm w-full mx-4 text-center shadow-xl">
+            <div className="text-4xl mb-4">🔐</div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Coming Soon</h3>
+            <p className="text-gray-500 text-sm mb-6">
+              Password reset is not available yet. Please contact support for help.
+            </p>
+            <button
+              onClick={() => setForgotMsg(false)}
+              className="bg-[#1a1f5e] text-white px-6 py-2 rounded-lg text-sm hover:bg-[#2d3494]"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   )
