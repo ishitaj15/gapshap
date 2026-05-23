@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import api from '../lib/axios'
 
-
-
 export default function Login({ onLogin, onGoSignup }) {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
@@ -14,10 +12,8 @@ export default function Login({ onLogin, onGoSignup }) {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
       const res = await api.post('/auth/login', { email, password })
-      // Save tokens to localStorage
       localStorage.setItem('accessToken',  res.data.accessToken)
       localStorage.setItem('refreshToken', res.data.refreshToken)
       localStorage.setItem('user',         JSON.stringify(res.data.user))
@@ -30,77 +26,117 @@ export default function Login({ onLogin, onGoSignup }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-md">
+    <div className="min-h-screen flex">
 
-        <h1 className="text-3xl font-bold text-purple-600 mb-2">GapShap 💬</h1>
-        <p className="text-gray-500 mb-6">Sign in to your account</p>
+      {/* ── Left panel ───────────────────────────────── */}
+      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#1a1f5e] to-[#2d3494] flex-col items-center justify-center p-12 text-white">
+        <img
+          src="/assets/logo.png"
+          alt="GapShap"
+          className="w-56 mb-6 drop-shadow-2xl brightness-110"
+        />
+        <h1 className="text-4xl font-bold mb-3 text-center">GapShap</h1>
+        <p className="text-lg text-blue-200 mb-2 text-center italic">
+          Baaten Jo Jodein
+        </p>
+        <p className="text-blue-300 text-sm text-center mt-4 max-w-xs leading-relaxed">
+          Real-time chat powered by a custom C++ engine. Fast, secure, and built for scale.
+        </p>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg mb-4 text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-1">
-  <label className="block text-sm font-medium text-gray-700">
-    Password
-  </label>
-  <span className="text-xs text-purple-600 hover:underline cursor-pointer">
-    Forgot password?
-  </span>
-</div>
-            <div className="relative">
-  <input
-    type={showPass ? 'text' : 'password'}
-    value={password}
-    onChange={e => setPassword(e.target.value)}
-    className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-purple-400"
-    placeholder="••••••••"
-    required
-  />
-  <button
-    type="button"
-    onClick={() => setShowPass(p => !p)}
-    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-  >
-    {showPass ? '🙈' : '👁️'}
-  </button>
-</div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-purple-600 text-white py-2 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50"
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-        <p className="text-center text-sm text-gray-500 mt-4">
-  Don't have an account?{' '}
-  <a onClick={onGoSignup} className="text-purple-600 hover:underline font-medium cursor-pointer">
-    Sign up
-  </a>
-</p>
-
+        {/* Feature pills */}
+        <div className="mt-10 space-y-3 w-full max-w-xs">
+          {[
+            { icon: '⚡', text: 'Real-time messaging via C++ epoll' },
+            { icon: '🔒', text: 'JWT auth with refresh tokens' },
+            { icon: '🌐', text: 'Online/offline status' },
+          ].map((f, i) => (
+            <div key={i} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3">
+              <span className="text-xl">{f.icon}</span>
+              <span className="text-sm text-blue-100">{f.text}</span>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* ── Right panel ──────────────────────────────── */}
+      <div className="flex-1 flex items-center justify-center bg-gray-50 p-8">
+        <div className="w-full max-w-md">
+
+          {/* Mobile logo */}
+          <div className="lg:hidden flex justify-center mb-8">
+            <img src="/assets/logo.png" alt="GapShap" className="w-24" />
+          </div>
+
+          <h2 className="text-2xl font-bold text-gray-800 mb-1">Welcome back</h2>
+          <p className="text-gray-500 text-sm mb-8">Sign in to your GapShap account</p>
+
+          {error && (
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2d3494] text-sm"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <span className="text-xs text-[#2d3494] hover:underline cursor-pointer">
+                  Forgot password?
+                </span>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-[#2d3494] text-sm"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(p => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPass ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#1a1f5e] text-white py-3 rounded-lg font-medium hover:bg-[#2d3494] disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-500 mt-6">
+            Don't have an account?{' '}
+            <button
+              onClick={onGoSignup}
+              className="text-[#2d3494] hover:underline font-medium"
+            >
+              Sign up
+            </button>
+          </p>
+
+        </div>
+      </div>
+
     </div>
   )
 }
