@@ -36,6 +36,21 @@ module.exports = (io) => {
     // Send current online users list to newly connected user
     socket.emit('online_users', { userIds: Array.from(onlineUsers) });
 
+    // ─── Typing indicator ─────────────────────────────
+socket.on('typing_start', ({ recipientId }) => {
+  io.to(recipientId).emit('user_typing', {
+    userId:   socket.userId,
+    isTyping: true,
+  });
+});
+
+socket.on('typing_stop', ({ recipientId }) => {
+  io.to(recipientId).emit('user_typing', {
+    userId:   socket.userId,
+    isTyping: false,
+  });
+});
+
     // ─── Handle message from browser ──────────────────
     socket.on('send_message', (data) => {
       const { conversationId, content, recipientId } = data;
@@ -71,9 +86,12 @@ module.exports = (io) => {
 
   // ─── Deliver messages from C++ to recipient ───────────
   bridge.onDeliver = (data) => {
-    const { recipientId } = data;
-    if (recipientId) {
-      io.to(recipientId).emit('new_message', data);
-    }
-  };
+  const { recipientId } = data;
+  if (recipientId) {
+    io.to(recipientId).emit('new_message', {
+      ...data,
+      created_at: new Date().toISOString(),
+    });
+  }
+};
 };

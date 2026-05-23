@@ -13,6 +13,7 @@ export default function Chat({ user, onLogout }) {
   const [searchResults, setSearchResults] = useState([])
   const [onlineUsers,   setOnlineUsers]   = useState(new Set())
   const [unreadCounts,  setUnreadCounts]  = useState({})
+  const [isTyping,      setIsTyping]      = useState(false)
 
   const socketRef    = useRef(null)
   const bottomRef    = useRef(null)
@@ -34,6 +35,15 @@ export default function Chat({ user, onLogout }) {
     socketRef.current.on('online_users', ({ userIds }) => {
       setOnlineUsers(new Set(userIds))
     })
+
+    // Typing indicator
+socketRef.current.on('user_typing', ({ isTyping }) => {
+  setIsTyping(isTyping)
+  // Auto clear after 3 seconds in case stop event is missed
+  if (isTyping) {
+    setTimeout(() => setIsTyping(false), 3000)
+  }
+})
 
     socketRef.current.on('user_status', ({ userId, status }) => {
       setOnlineUsers(prev => {
@@ -128,8 +138,8 @@ export default function Chat({ user, onLogout }) {
   }
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+}, [messages, isTyping])
 
   const sendMessage = () => {
     if (!input.trim() || !activeConv) return
@@ -283,23 +293,46 @@ export default function Chat({ user, onLogout }) {
                         ${isMe ? 'bg-purple-600 text-white' : 'bg-white text-gray-800 shadow'}`}>
                         {msg.content}
                         <div className={`text-xs mt-1 ${isMe ? 'text-purple-200' : 'text-gray-400'}`}>
-                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                         </div>
                       </div> 
                     </div>
                   )
                 })}
+                {isTyping && (
+  <div className="flex justify-start">
+    <div className="bg-white text-gray-500 text-xs px-4 py-2 rounded-2xl shadow italic">
+      {activeConv.other_username} is typing...
+    </div>
+  </div>
+)}
+
                 <div ref={bottomRef} />
               </div>
 
               <div className="bg-white border-t px-6 py-4 flex gap-2 shrink-0">
                 <input
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && sendMessage()}
-                  placeholder="Type a message..."
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                />
+  value={input}
+  onChange={e => {
+    setInput(e.target.value)
+    // Emit typing start
+    socketRef.current.emit('typing_start', { recipientId: activeConv.other_user_id })
+  }}
+  onKeyDown={e => {
+    if (e.key === 'Enter') {
+      sendMessage()
+      // Emit typing stop on send
+      socketRef.current.emit('typing_stop', { recipientId: activeConv.other_user_id })
+    }
+  }}
+  onBlur={() => {
+    // Emit typing stop when input loses focus
+    socketRef.current.emit('typing_stop', { recipientId: activeConv.other_user_id })
+  }}
+  placeholder="Type a message..."
+  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+/>
+
                 <button onClick={sendMessage}
                   className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
                   Send
