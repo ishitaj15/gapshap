@@ -1,5 +1,6 @@
 const jwt    = require('jsonwebtoken');
 const bridge = require('../services/cppBridge');
+const onlineUsers = new Set();
 
 module.exports = (io) => {
 
@@ -23,6 +24,8 @@ module.exports = (io) => {
 
     // Join personal room
     socket.join(socket.userId);
+    onlineUsers.add(socket.userId);
+    io.emit('user_online', { userId: socket.userId });
 
     // Tell C++ this user is now online
     bridge.authenticate(socket.userId);
@@ -54,6 +57,8 @@ module.exports = (io) => {
     socket.on('disconnect', () => {
       console.log(`[socket] user disconnected: ${socket.userId}`);
       bridge.userDisconnected(socket.userId);
+      onlineUsers.delete(socket.userId);
+      io.emit('user_offline', { userId: socket.userId });
     });
   });
 

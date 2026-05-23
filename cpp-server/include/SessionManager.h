@@ -10,6 +10,7 @@ public:
 
     // Remove a session by fd
     void removeSession(int fd);
+    void removeSessionByUserId(const std::string& userId);
 
     // Get fd for a userId
     int getFd(const std::string& userId);
