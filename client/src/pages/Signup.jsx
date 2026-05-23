@@ -47,7 +47,7 @@ export default function Signup({ onSignup }) {
           <img
             src="/assets/logo.png"
             alt="GapShap"
-            className="w-36 h-36 object-contain rounded-full"
+            className="w-32 h-32 object-contain rounded-full"
           />
         </div>
         <h1 className="text-4xl font-bold mb-3 text-center">GapShap</h1>
