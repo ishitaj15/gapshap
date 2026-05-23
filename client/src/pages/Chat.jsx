@@ -6,9 +6,11 @@ const SOCKET = 'http://localhost:3001'
 
 export default function Chat({ user, onLogout }) {
   const [conversations,  setConversations]  = useState([])
-  const [activeConv,     setActiveConv]     = useState(null) // { conversation_id, other_user_id, other_username }
-  const [messages,       setMessages]       = useState([])
-  const [input,          setInput]          = useState('')
+const [activeConv,     setActiveConv]     = useState(null)
+const [messages,       setMessages]       = useState([])
+const [input,          setInput]          = useState('')
+const [searchQuery,    setSearchQuery]    = useState('')
+const [searchResults,  setSearchResults]  = useState([])
   const socketRef = useRef(null)
   const bottomRef = useRef(null)
 
@@ -50,6 +52,47 @@ export default function Chat({ user, onLogout }) {
   useEffect(() => {
     loadConversations()
   }, [])
+
+  // ─── Search users ─────────────────────────────────────────
+const handleSearch = async (q) => {
+  setSearchQuery(q)
+  if (q.trim().length < 2) {
+    setSearchResults([])
+    return
+  }
+  try {
+    const res = await api.get(`/messages/search/users?q=${q.trim()}`)
+    setSearchResults(res.data.users)
+  } catch {
+    setSearchResults([])
+  }
+}
+
+// ─── Start new conversation from search ───────────────────
+const startNewConversation = async (selectedUser) => {
+  setSearchQuery('')
+  setSearchResults([])
+  try {
+    const res = await api.post('/messages/conversation', {
+      otherUserId: selectedUser.id
+    })
+    const conv = {
+      conversation_id:  res.data.conversation.id,
+      other_user_id:    selectedUser.id,
+      other_username:   selectedUser.username,
+      last_message:     null,
+      last_message_at:  null,
+    }
+    // Add to sidebar if not already there
+    setConversations(prev => {
+      const exists = prev.find(c => c.conversation_id === conv.conversation_id)
+      return exists ? prev : [conv, ...prev]
+    })
+    openConversation(conv)
+  } catch {
+    console.error('failed to start conversation')
+  }
+}
 
   const loadConversations = async () => {
     try {
@@ -125,9 +168,37 @@ export default function Chat({ user, onLogout }) {
         {/* ── Sidebar ───────────────────────────────────── */}
         <div className="w-80 bg-white border-r flex flex-col shrink-0">
 
-          <div className="p-4 border-b">
-            <p className="text-sm font-semibold text-gray-700">Messages</p>
+          <div className="p-4 border-b space-y-3">
+  <p className="text-sm font-semibold text-gray-700">Messages</p>
+
+  {/* Search box */}
+  <div className="relative">
+    <input
+      value={searchQuery}
+      onChange={e => handleSearch(e.target.value)}
+      placeholder="Search users..."
+      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+    />
+
+    {/* Search results dropdown */}
+    {searchResults.length > 0 && (
+      <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-10">
+        {searchResults.map(u => (
+          <div
+            key={u.id}
+            onClick={() => startNewConversation(u)}
+            className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold text-xs shrink-0">
+              {u.username[0].toUpperCase()}
+            </div>
+            <span className="text-sm text-gray-800">{u.username}</span>
           </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
 
           <div className="flex-1 overflow-y-auto">
             {conversations.length === 0 && (
