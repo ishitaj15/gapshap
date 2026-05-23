@@ -279,10 +279,13 @@ export default function Chat({ user, onLogout }) {
                   const isMe = (msg.sender_id || msg.senderId) === user.id
                   return (
                     <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`px-4 py-2 rounded-2xl max-w-xs text-sm
+                     <div className={`px-4 py-2 rounded-2xl max-w-xs text-sm
                         ${isMe ? 'bg-purple-600 text-white' : 'bg-white text-gray-800 shadow'}`}>
                         {msg.content}
-                      </div>
+                        <div className={`text-xs mt-1 ${isMe ? 'text-purple-200' : 'text-gray-400'}`}>
+                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div> 
                     </div>
                   )
                 })}
