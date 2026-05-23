@@ -39,7 +39,9 @@ export default function Chat({ user, onLogout }) {
   const startConversation = async () => {
     if (!recipientId.trim()) return
     try {
-     const res = await api.post('/messages/conversation', { otherUserId: recipientId })
+     const res = await api.post('/messages/conversation', {
+  otherUserId: recipientId.trim()
+})
       setConversationId(res.data.conversation.id)
       setMessages([])
     } catch {
@@ -53,8 +55,17 @@ export default function Chat({ user, onLogout }) {
     socketRef.current.emit('send_message', {
       conversationId,
       content:     input,
-      recipientId,
+      recipientId: recipientId.trim(),
     })
+
+    setMessages(prev => [
+  ...prev,
+  {
+    senderId: user.id,
+    content: input,
+  }
+])
+
     setInput('')
   }
 
