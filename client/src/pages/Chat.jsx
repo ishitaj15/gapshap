@@ -11,6 +11,7 @@ const [messages,       setMessages]       = useState([])
 const [input,          setInput]          = useState('')
 const [searchQuery,    setSearchQuery]    = useState('')
 const [searchResults,  setSearchResults]  = useState([])
+const [onlineUsers,    setOnlineUsers]    = useState(new Set())
   const socketRef = useRef(null)
   const bottomRef = useRef(null)
 
@@ -22,6 +23,20 @@ const [searchResults,  setSearchResults]  = useState([])
     socketRef.current.on('connect', () => {
       console.log('[socket] connected')
     })
+
+    // Track online/offline status
+socketRef.current.on('online_users', ({ userIds }) => {
+  setOnlineUsers(new Set(userIds))
+})
+
+socketRef.current.on('user_status', ({ userId, status }) => {
+  setOnlineUsers(prev => {
+    const next = new Set(prev)
+    if (status === 'online') next.add(userId)
+    else next.delete(userId)
+    return next
+  })
+})
 
     socketRef.current.on('new_message', (msg) => {
       // Add to messages if it belongs to active conversation
@@ -211,9 +226,14 @@ const startNewConversation = async (selectedUser) => {
                 className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 border-b
                   ${activeConv?.conversation_id === conv.conversation_id ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''}`}
               >
-                {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold text-sm shrink-0">
-                  {conv.other_username[0].toUpperCase()}
+                {/* Avatar with online indicator */}
+                <div className="relative shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold text-sm">
+                    {conv.other_username[0].toUpperCase()}
+                  </div>
+                  {onlineUsers.has(conv.other_user_id) && (
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full" />
+                  )}
                 </div>
 
                 {/* Name + preview */}

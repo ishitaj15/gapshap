@@ -1,6 +1,5 @@
 const jwt    = require('jsonwebtoken');
 const bridge = require('../services/cppBridge');
-const onlineUsers = new Set();
 
 module.exports = (io) => {
 
@@ -18,24 +17,30 @@ module.exports = (io) => {
     }
   });
 
-  // ─── Handle connections ────────────────────────────────
+  // ─── Track online users ────────────────────────────────
+  const onlineUsers = new Set();
+
   io.on('connection', (socket) => {
     console.log(`[socket] user connected: ${socket.userId}`);
 
-    // Join personal room
-    socket.join(socket.userId);
+    // Mark online
     onlineUsers.add(socket.userId);
-    io.emit('user_online', { userId: socket.userId });
+    socket.join(socket.userId);
 
-    // Tell C++ this user is now online
+    // Tell C++ this user is online
     bridge.authenticate(socket.userId);
+
+    // Broadcast online status to everyone
+    io.emit('user_status', { userId: socket.userId, status: 'online' });
+
+    // Send current online users list to newly connected user
+    socket.emit('online_users', { userIds: Array.from(onlineUsers) });
 
     // ─── Handle message from browser ──────────────────
     socket.on('send_message', (data) => {
       const { conversationId, content, recipientId } = data;
       if (!conversationId || !content || !recipientId) return;
 
-      // Forward to C++ server — it saves to DB and delivers
       bridge.sendMessage(
         conversationId,
         socket.userId,
@@ -56,9 +61,11 @@ module.exports = (io) => {
     // ─── Handle disconnection ─────────────────────────
     socket.on('disconnect', () => {
       console.log(`[socket] user disconnected: ${socket.userId}`);
-      bridge.userDisconnected(socket.userId);
       onlineUsers.delete(socket.userId);
-      io.emit('user_offline', { userId: socket.userId });
+      bridge.userDisconnected(socket.userId);
+
+      // Broadcast offline status to everyone
+      io.emit('user_status', { userId: socket.userId, status: 'offline' });
     });
   });
 
