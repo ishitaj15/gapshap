@@ -60,4 +60,43 @@ router.post('/conversation', requireAuth, async (req, res) => {
   }
 });
 
+// ─── GET ALL CONVERSATIONS FOR LOGGED-IN USER ─────────────
+router.get('/', requireAuth, async (req, res) => {
+  const myId = req.userId;
+
+  try {
+    const result = await db.query(
+      `SELECT
+         c.id AS conversation_id,
+         c.created_at,
+         -- get the other user's info
+         CASE WHEN c.user_a = $1 THEN u_b.id   ELSE u_a.id   END AS other_user_id,
+         CASE WHEN c.user_a = $1 THEN u_b.username ELSE u_a.username END AS other_username,
+         -- last message preview
+         m.content    AS last_message,
+         m.created_at AS last_message_at,
+         m.sender_id  AS last_sender_id
+       FROM conversations c
+       JOIN users u_a ON u_a.id = c.user_a
+       JOIN users u_b ON u_b.id = c.user_b
+       LEFT JOIN LATERAL (
+         SELECT content, created_at, sender_id
+         FROM messages
+         WHERE conversation_id = c.id
+         ORDER BY created_at DESC
+         LIMIT 1
+       ) m ON true
+       WHERE c.user_a = $1 OR c.user_b = $1
+       ORDER BY COALESCE(m.created_at, c.created_at) DESC`,
+      [myId]
+    );
+
+    res.json({ conversations: result.rows });
+  } catch (err) {
+    console.error('[messages] conversations list error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 module.exports = router;
