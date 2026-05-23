@@ -263,12 +263,31 @@ socketRef.current.on('user_typing', ({ isTyping }) => {
         {/* Chat window */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {!activeConv ? (
-            <div className="flex-1 flex items-center justify-center text-gray-400">
-              <div className="text-center">
-                <p className="text-4xl mb-3">💬</p>
-                <p className="text-sm">Select a conversation to start chatting</p>
-              </div>
-            </div>
+  <div className="flex-1 flex items-center justify-center bg-gray-50">
+    <div className="text-center px-8 max-w-sm">
+      <div className="text-7xl mb-6">💬</div>
+      <h2 className="text-2xl font-bold text-gray-800 mb-3">
+        Welcome to GapShap
+      </h2>
+      <p className="text-gray-500 mb-6 leading-relaxed">
+        Start a conversation and chat in real-time.
+      </p>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-left space-y-3">
+        <div className="flex items-center gap-3 text-sm text-gray-600">
+          <span className="text-xl">🔍</span>
+          <span>Search for a user from the sidebar</span>
+        </div>
+        <div className="flex items-center gap-3 text-sm text-gray-600">
+          <span className="text-xl">👋</span>
+          <span>Click on a conversation to open it</span>
+        </div>
+        <div className="flex items-center gap-3 text-sm text-gray-600">
+          <span className="text-xl">⚡</span>
+          <span>Messages delivered in real-time</span>
+        </div>
+      </div>
+    </div>
+  </div>
           ) : (
             <>
               <div className="bg-white border-b px-6 py-3 flex items-center gap-3 shrink-0">
