@@ -7,6 +7,8 @@ export default function Login({ onLogin, onGoSignup }) {
   const [error,    setError]    = useState('')
   const [loading,  setLoading]  = useState(false)
   const [showPass, setShowPass] = useState(false)
+  const [forgotMsg, setForgotMsg] = useState(false)
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -92,9 +94,29 @@ export default function Login({ onLogin, onGoSignup }) {
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-medium text-gray-700">Password</label>
-                <span className="text-xs text-[#2d3494] hover:underline cursor-pointer">
-                  Forgot password?
-                </span>
+                <span
+  onClick={() => setForgotMsg(true)}
+  className="text-xs text-[#2d3494] hover:underline cursor-pointer"
+>
+  Forgot password?
+</span>
+{forgotMsg && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white rounded-xl p-8 max-w-sm w-full mx-4 text-center shadow-xl">
+      <div className="text-4xl mb-4">🔐</div>
+      <h3 className="text-lg font-semibold text-gray-800 mb-2">Coming Soon</h3>
+      <p className="text-gray-500 text-sm mb-6">
+        Password reset is not available yet. Please contact support for help.
+      </p>
+      <button
+        onClick={() => setForgotMsg(false)}
+        className="bg-[#1a1f5e] text-white px-6 py-2 rounded-lg text-sm hover:bg-[#2d3494]"
+      >
+        Got it
+      </button>
+    </div>
+  </div>
+)}
               </div>
               <div className="relative">
                 <input
