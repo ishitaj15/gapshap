@@ -273,10 +273,42 @@ export default function Chat({ user, onLogout }) {
                   {messages.length === 0 && (
                     <p className="text-center text-gray-400 text-sm mt-10">No messages yet. Say hi!</p>
                   )}
+
                   {messages.map((msg, i) => {
-                    const isMe = (msg.sender_id || msg.senderId) === user.id
-                    return (
-                      <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+  const isMe = (msg.sender_id || msg.senderId) === user.id
+
+  // ─── Date separator logic ─────────────────────────
+  const msgDate = msg.created_at ? new Date(msg.created_at) : null
+  const prevMsg = messages[i - 1]
+  const prevDate = prevMsg?.created_at ? new Date(prevMsg.created_at) : null
+
+  const showDateSeparator = msgDate && (
+    !prevDate ||
+    msgDate.toDateString() !== prevDate.toDateString()
+  )
+
+  const formatSeparatorDate = (date) => {
+    const today = new Date()
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    if (date.toDateString() === today.toDateString()) return 'Today'
+    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
+    return date.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' })
+  }
+
+  return (
+    <div key={i}>
+      {showDateSeparator && (
+        <div className="flex items-center gap-3 my-4">
+          <div className="flex-1 h-px bg-purple-100" />
+          <span className="text-xs text-gray-400 font-medium px-2">
+            {formatSeparatorDate(msgDate)}
+          </span>
+          <div className="flex-1 h-px bg-purple-100" />
+        </div>
+      )}
+      <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+
                         {/* ← CHANGE 4: rounder bubbles */}
                         <div className={`px-4 py-2 rounded-3xl max-w-xs text-sm
                           ${isMe ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-gray-800 shadow-sm'}`}>
@@ -286,8 +318,9 @@ export default function Chat({ user, onLogout }) {
                           </div>
                         </div>
                       </div>
-                    )
-                  })}
+    </div>
+  )
+})}
                   {isTyping && (
                     <div className="flex justify-start">
                       <div className="bg-white text-gray-500 text-xs px-4 py-2 rounded-2xl shadow-sm italic">
