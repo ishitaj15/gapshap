@@ -195,9 +195,17 @@ export default function Chat({ user, onLogout }) {
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              {conversations.length === 0 && (
-                <p className="text-center text-gray-400 text-sm mt-8">No conversations yet</p>
-              )}
+  {conversations.length === 0 && (
+    <div className="flex flex-col items-center justify-center mt-20 px-6 text-center">
+      <p className="text-gray-500 font-medium">
+        Start a conversation 👋
+      </p>
+      <p className="text-gray-400 text-sm mt-2">
+        Search for a user to begin chatting
+      </p>
+    </div>
+  )}
+
               {conversations.map(conv => (
                 <div key={conv.conversation_id} onClick={() => openConversation(conv)}
                   className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 border-b border-purple-50
