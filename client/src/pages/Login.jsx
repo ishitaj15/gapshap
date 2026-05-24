@@ -84,6 +84,7 @@ export default function Login({ onLogin, onGoSignup }) {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && document.getElementById('password-input').focus()}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2d3494] text-sm"
                 placeholder="you@example.com"
                 required
@@ -102,6 +103,7 @@ export default function Login({ onLogin, onGoSignup }) {
               </div>
               <div className="relative">
                 <input
+                  id="password-input"
                   type={showPass ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}

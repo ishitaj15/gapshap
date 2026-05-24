@@ -96,6 +96,7 @@ export default function Signup({ onSignup }) {
                 type="text"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && document.getElementById('signup-email').focus()}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2d3494] text-sm"
                 placeholder="yourname"
                 required
@@ -105,9 +106,11 @@ export default function Signup({ onSignup }) {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
+                id="signup-email"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && document.getElementById('signup-password').focus()}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2d3494] text-sm"
                 placeholder="you@example.com"
                 required
@@ -118,6 +121,7 @@ export default function Signup({ onSignup }) {
               <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
               <div className="relative">
                 <input
+                  id="signup-password"
                   type={showPass ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
