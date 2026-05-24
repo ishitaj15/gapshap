@@ -49,7 +49,7 @@ export default function Login({ onLogin, onGoSignup }) {
           {[
             { icon: '⚡', text: 'Real-time messaging via C++ epoll' },
             { icon: '🔒', text: 'JWT auth with refresh tokens' },
-            { icon: '🌐', text: 'Online/offline status' },
+            { icon: '🌐', text: 'Live chat presence' },
           ].map((f, i) => (
             <div key={i} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3">
               <span className="text-xl">{f.icon}</span>
