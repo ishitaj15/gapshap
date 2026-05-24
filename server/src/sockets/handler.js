@@ -17,22 +17,45 @@ module.exports = (io) => {
     }
   });
 
-  // ─── Handle connections ────────────────────────────────
+  // ─── Track online users ────────────────────────────────
+  const onlineUsers = new Set();
+
   io.on('connection', (socket) => {
     console.log(`[socket] user connected: ${socket.userId}`);
 
-    // Join personal room
+    // Mark online
+    onlineUsers.add(socket.userId);
     socket.join(socket.userId);
 
-    // Tell C++ this user is now online
+    // Tell C++ this user is online
     bridge.authenticate(socket.userId);
+
+    // Broadcast online status to everyone
+    io.emit('user_status', { userId: socket.userId, status: 'online' });
+
+    // Send current online users list to newly connected user
+    socket.emit('online_users', { userIds: Array.from(onlineUsers) });
+
+    // ─── Typing indicator ─────────────────────────────
+socket.on('typing_start', ({ recipientId }) => {
+  io.to(recipientId).emit('user_typing', {
+    userId:   socket.userId,
+    isTyping: true,
+  });
+});
+
+socket.on('typing_stop', ({ recipientId }) => {
+  io.to(recipientId).emit('user_typing', {
+    userId:   socket.userId,
+    isTyping: false,
+  });
+});
 
     // ─── Handle message from browser ──────────────────
     socket.on('send_message', (data) => {
       const { conversationId, content, recipientId } = data;
       if (!conversationId || !content || !recipientId) return;
 
-      // Forward to C++ server — it saves to DB and delivers
       bridge.sendMessage(
         conversationId,
         socket.userId,
@@ -53,15 +76,22 @@ module.exports = (io) => {
     // ─── Handle disconnection ─────────────────────────
     socket.on('disconnect', () => {
       console.log(`[socket] user disconnected: ${socket.userId}`);
+      onlineUsers.delete(socket.userId);
       bridge.userDisconnected(socket.userId);
+
+      // Broadcast offline status to everyone
+      io.emit('user_status', { userId: socket.userId, status: 'offline' });
     });
   });
 
   // ─── Deliver messages from C++ to recipient ───────────
   bridge.onDeliver = (data) => {
-    const { recipientId } = data;
-    if (recipientId) {
-      io.to(recipientId).emit('new_message', data);
-    }
-  };
+  const { recipientId } = data;
+  if (recipientId) {
+    io.to(recipientId).emit('new_message', {
+      ...data,
+      created_at: new Date().toISOString(),
+    });
+  }
+};
 };

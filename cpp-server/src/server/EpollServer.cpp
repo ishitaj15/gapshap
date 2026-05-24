@@ -110,12 +110,11 @@ void EpollServer::handleClient(int fd) {
 
     // Try to parse complete frames
     Frame frame;
-    while (BinaryProtocol::decode(conn->buffer(), frame)) {
-        handleFrame(fd, frame.payload, frame.type);
-        // Remove processed frame from buffer
-        uint32_t len = frame.payload.size();
-        conn->clearBuffer();
-    }
+  while (BinaryProtocol::decode(conn->buffer(), frame)) {
+    handleFrame(fd, frame.payload, frame.type);
+    // Remove only the processed frame, not the entire buffer
+    conn->consumeBytes(5 + frame.payload.size());
+}
 }
 
 void EpollServer::handleFrame(int fd, const std::string& payload, uint8_t type) {
@@ -146,8 +145,12 @@ void EpollServer::handleFrame(int fd, const std::string& payload, uint8_t type) 
         sendFrame(fd, MSG_ACK, "{\"status\":\"delivered\"}");
     }
     else if (type == MSG_USER_DISCONNECTED) {
-        closeConnection(fd);
+    std::string userId = jsonGet(payload, "userId");
+    if (!userId.empty()) {
+        sessions_.removeSessionByUserId(userId);
+        Logger::info("User session removed: " + userId);
     }
+}
 }
 
 void EpollServer::closeConnection(int fd) {

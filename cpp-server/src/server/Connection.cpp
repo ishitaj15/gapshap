@@ -9,3 +9,10 @@ void Connection::appendData(const std::string& data) {
 void Connection::clearBuffer() {
     buffer_.clear();
 }
+
+void Connection::consumeBytes(size_t n) {
+    if (n >= buffer_.size())
+        buffer_.clear();
+    else
+        buffer_ = buffer_.substr(n);
+}

@@ -1,8 +1,35 @@
 const express      = require('express');
 const db           = require('../services/db');
 const { requireAuth } = require('../middleware/jwt');
-
 const router = express.Router();
+
+
+// ─── SEARCH USERS BY USERNAME ─────────────────────────────
+router.get('/search/users', requireAuth, async (req, res) => {
+  const { q } = req.query;
+
+  if (!q || q.trim().length < 2) {
+    return res.status(400).json({ error: 'Query must be at least 2 characters' });
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT id, username
+       FROM users
+       WHERE username ILIKE $1
+       AND id != $2
+       LIMIT 10`,
+      [`%${q.trim()}%`, req.userId]
+    );
+
+    res.json({ users: result.rows });
+  } catch (err) {
+    console.error('[search] error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 
 // ─── GET MESSAGE HISTORY ──────────────────────────────────
 // Returns last 50 messages between two users
@@ -60,41 +87,43 @@ router.post('/conversation', requireAuth, async (req, res) => {
   }
 });
 
-// ─── SEARCH USERS BY USERNAME ─────────────────────────────
-router.get('/users/search', requireAuth, async (req, res) => {
-  const { q } = req.query;
-
-  if (!q || q.trim().length < 2) {
-    return res.status(400).json({ error: 'Search query too short' });
-  }
+// ─── GET ALL CONVERSATIONS FOR LOGGED-IN USER ─────────────
+router.get('/', requireAuth, async (req, res) => {
+  const myId = req.userId;
 
   try {
     const result = await db.query(
-      `SELECT id, username, email
-       FROM users
-       WHERE username ILIKE $1
-       AND id != $2
-       LIMIT 10`,
-      [`%${q}%`, req.userId]
+      `SELECT
+         c.id AS conversation_id,
+         c.created_at,
+         -- get the other user's info
+         CASE WHEN c.user_a = $1 THEN u_b.id   ELSE u_a.id   END AS other_user_id,
+         CASE WHEN c.user_a = $1 THEN u_b.username ELSE u_a.username END AS other_username,
+         -- last message preview
+         m.content    AS last_message,
+         m.created_at AS last_message_at,
+         m.sender_id  AS last_sender_id
+       FROM conversations c
+       JOIN users u_a ON u_a.id = c.user_a
+       JOIN users u_b ON u_b.id = c.user_b
+       LEFT JOIN LATERAL (
+         SELECT content, created_at, sender_id
+         FROM messages
+         WHERE conversation_id = c.id
+         ORDER BY created_at DESC
+         LIMIT 1
+       ) m ON true
+       WHERE c.user_a = $1 OR c.user_b = $1
+       ORDER BY COALESCE(m.created_at, c.created_at) DESC`,
+      [myId]
     );
 
-    res.json({ users: result.rows });
-
+    res.json({ conversations: result.rows });
   } catch (err) {
-    console.error('[users] search error:', err.message);
+    console.error('[messages] conversations list error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
+
 module.exports = router;
-
-
-//ILIKE is PostgreSQL's case-insensitive LIKE. Searching "ish" finds "Ishita", "ishita", "ISHITA". The % wildcards mean "anything before or after".
-
-// WHERE username ILIKE $1
-// Where $1 gets replaced with %${q}% — so if you type "ish" it becomes %ish% which matches any username containing "ish" — like "ishita", "fishing", "rishab".
-// The % means "anything can be here". So:
-
-// %ish% → anything containing "ish"
-// ish% → anything starting with "ish"
-// %ish → anything ending with "ish"

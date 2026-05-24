@@ -1,0 +1,27 @@
+[33mc380997[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m feat: add user search by username
+[33mbc17ae0[m docs: add README with architecture and setup guide
+[33m2db2d23[m docs: add README with architecture and setup guide
+[33m2f23bd0[m feat: add axios interceptor for auto token refresh
+[33m97d5ad1[m feat: add rate limiting on login route
+[33m445b970[m feat: wire node.js to c++ server via TCP bridge
+[33m14b656e[m feat: add C++ epoll TCP server with Docker build
+[33md0bfe98[m feat: add password visibility toggle and strength requirements
+[33m0c0a853[m feat: add signup page and routing
+[33m3eee417[m feat: add real-time chat UI with socket.io
+[33m1f1c9bd[m feat: add login page with JWT auth
+[33m2b20337[m feat: initialize react frontend with tailwind
+[33m3cb6549[m feat: add socket.io with JWT authentication
+[33m4cc96df[m feat: add messages and conversation routes
+[33mff67f58[m feat: add refresh tokens and logout
+[33mfde5144[m feat: add JWT middleware and protected route
+[33mbf5d512[m feat: add JWT token generation on login
+[33m72991e0[m feat: add login route with bcrypt verification
+[33mb018f2e[m feat: add signup route with bcrypt password hashing
+[33m764be62[m fix: change postgres port to 5433 to avoid windows conflict
+[33m1189f87[m fix: change postgres port to 5433 to avoid windows conflict
+[33m27d5f8f[m feat: initialize node.js server with express
+[33m69e737f[m fix: remove obsolete version from docker-compose
+[33ma501687[m feat: add docker compose with postgres
+[33mcb4fbaf[m feat: add database schema
+[33m2b1cb75[m chore: scaffold project folder structure
+[33m4cde62e[m chore: initial commit with gitignore

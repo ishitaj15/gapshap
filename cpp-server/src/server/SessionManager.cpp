@@ -26,3 +26,12 @@ std::string SessionManager::getUserId(int fd) {
     auto it = fdToUser_.find(fd);
     return it != fdToUser_.end() ? it->second : "";
 }
+
+void SessionManager::removeSessionByUserId(const std::string& userId) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto it = userToFd_.find(userId);
+    if (it != userToFd_.end()) {
+        fdToUser_.erase(it->second);
+        userToFd_.erase(it);
+    }
+}
