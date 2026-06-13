@@ -251,11 +251,3 @@ k6 run load_test.js
 
 ---
 
-## Interview Notes
-
-Key decisions worth discussing:
-
-- **Why C++ for routing?** Node.js is single-threaded. Offloading real-time routing to a C++ epoll server means message delivery doesn't compete with auth/REST workloads.
-- **Why edge-triggered epoll?** Forces the application to drain the buffer completely — reduces the number of epoll_wait syscalls under high connection counts.
-- **Why hash refresh tokens?** If the database is compromised, hashed tokens cannot be used directly — attacker still needs the original random value.
-- **Why `CHECK (user_a < user_b)`?** Eliminates an entire class of application-level bugs — duplicate conversations become a database impossibility, not a code concern.
