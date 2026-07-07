@@ -1,7 +1,7 @@
 # GapShap 💬
 ### *Baaten Jo Jodein — Words That Connect*
 
-A production-grade real-time chat system featuring a custom **C++17 epoll-based TCP server** for message routing, JWT-secured REST APIs, and a React frontend — fully containerized with Docker Compose.
+A production-grade real-time chat system featuring a custom **C++17 epoll-based TCP server** for message routing, JWT-secured REST APIs, and a React frontend, fully containerized with Docker Compose.
 
 > Built to demonstrate systems-level engineering: custom binary protocols, non-blocking I/O, and secure authentication from scratch.
 
@@ -45,7 +45,7 @@ Browser (React) ──── Socket.io ────► Node.js ──── Raw 
 | 🔄 Auto token refresh | Axios interceptor silently refreshes expired tokens |
 | 💬 Conversation sidebar | Last message preview, sorted by recency |
 | 📜 Message history | Loaded from PostgreSQL on conversation open |
-| 🔍 User search | Search by username — UUIDs used internally |
+| 🔍 User search | Search by username —> UUIDs used internally |
 | 🟢 Online/offline status | Real-time presence via Socket.io events |
 | 🔔 Unread badges | Client-side counter, resets on conversation open |
 | ✍️ Typing indicators | 3-second auto-clear timeout as safety net |
@@ -75,7 +75,7 @@ Load tested with **k6** — 50 concurrent virtual users, 3-stage ramp (10→50�
 | Decision | Rationale |
 |---|---|
 | `CHECK (user_a < user_b)` | Enforces canonical ordering — prevents duplicate conversation rows at DB level without application logic |
-| Edge-triggered epoll (`EPOLLET`) | Requires draining buffer completely — fewer syscalls under high concurrency vs level-triggered |
+| Edge-triggered epoll (`EPOLLET`) | Requires draining buffer completely , fewer syscalls under high concurrency vs level-triggered |
 | SHA-256 refresh token hashing | Raw tokens never stored — DB leak cannot expose valid sessions |
 | Sliding window rate limiting | Prevents boundary gaming that fixed-window limiters are vulnerable to |
 | UUID primary keys | Prevents sequential enumeration attacks (IDOR) |
