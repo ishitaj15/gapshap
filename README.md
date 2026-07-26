@@ -36,9 +36,11 @@ Most chat apps stop at Socket.io. I wanted to go a layer deeper and build the re
 
 ## 🏗️ Architecture
 
-Browser (React) --Socket.io--> Node.js --Raw TCP--> C++ epoll Server
-| | |
-+---------------- PostgreSQL <--------------------------+
+```
+Browser (React) ──Socket.io──► Node.js ──Raw TCP──► C++ epoll Server
+      │                           │                        │
+      └──────────────  PostgreSQL  ◄─────────────────────────┘
+```
 
 
 | Component | Responsibility |
@@ -117,10 +119,12 @@ Load tested with **k6** against the Node.js REST API, at 50 concurrent virtual u
 
 Custom length-prefixed framing for inter-process communication:
 
+```
 ┌───────────┬────────┬────────────────────┐
-│ Length │ Type │ Payload │
-│ (4 bytes) │ (1 B) │ (JSON string) │
+│  Length   │  Type  │      Payload       │
+│ (4 bytes) │ (1 B)  │   (JSON string)    │
 └───────────┴────────┴────────────────────┘
+```
 
 
 | Type | Hex | Description |
@@ -189,34 +193,35 @@ refresh_tokens (
 
 ## 📁 Project Structure
 
+```
 gapshap/
-├── client/ # React + Vite + Tailwind frontend
-│ └── src/
-│ ├── pages/ # Login, Signup, Chat
-│ └── lib/ # Axios interceptor (auto token refresh)
-├── server/ # Node.js + Express backend
-│ └── src/
-│ ├── routes/ # auth.js, messages.js
-│ ├── middleware/ # jwt.js, rateLimit.js
-│ ├── services/ # db.js, cppBridge.js, tokenService.js
-│ └── sockets/ # handler.js (Socket.io + C++ bridge)
-├── cpp-server/ # C++17 epoll TCP server
-│ ├── src/
-│ │ ├── server/ # EpollServer, Connection, SessionManager
-│ │ ├── protocol/ # BinaryProtocol (length-prefix framing)
-│ │ ├── db/ # PostgresClient (libpqxx)
-│ │ └── util/ # Logger
-│ ├── include/ # Header files
-│ ├── CMakeLists.txt
-│ └── Dockerfile
+├── client/                # React + Vite + Tailwind frontend
+│   └── src/
+│       ├── pages/         # Login, Signup, Chat
+│       └── lib/           # Axios interceptor (auto token refresh)
+├── server/                # Node.js + Express backend
+│   └── src/
+│       ├── routes/        # auth.js, messages.js
+│       ├── middleware/    # jwt.js, rateLimit.js
+│       ├── services/      # db.js, cppBridge.js, tokenService.js
+│       └── sockets/       # handler.js (Socket.io + C++ bridge)
+├── cpp-server/            # C++17 epoll TCP server
+│   ├── src/
+│   │   ├── server/        # EpollServer, Connection, SessionManager
+│   │   ├── protocol/      # BinaryProtocol (length-prefix framing)
+│   │   ├── db/            # PostgresClient (libpqxx)
+│   │   └── util/          # Logger
+│   ├── include/           # Header files
+│   ├── CMakeLists.txt
+│   └── Dockerfile
 ├── load-test/
-│ └── load_test.js # k6 load test (50 VUs, 3-stage ramp)
+│   └── load_test.js       # k6 load test (50 VUs, 3-stage ramp)
 ├── db/
-│ └── init.sql # PostgreSQL schema
+│   └── init.sql           # PostgreSQL schema
 ├── docs/
-│ └── BENCHMARKS.md # Detailed load-test results
+│   └── BENCHMARKS.md      # Detailed load-test results
 └── docker-compose.yml
-
+```
 
 ---
 
